@@ -1,5 +1,5 @@
 {
-    "name": "winter/logger",
+    "name": "flytachi/winter-logger",
     "description": "Multi-runtime PSR-3 logger for Winter framework (FPM, Swoole, CLI)",
     "type": "library",
     "license": "MIT",
