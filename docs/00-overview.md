@@ -1,6 +1,6 @@
 # Winter Logger — Overview
 
-**winter/logger** is a multi-runtime PSR-3 logger for the Winter framework.
+**flytachi/winter-logger** is a multi-runtime PSR-3 logger for the Winter framework.
 
 ---
 

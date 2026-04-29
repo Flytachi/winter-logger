@@ -6,10 +6,10 @@
 
 ```bash
 # With Monolog (actual logging):
-composer require winter/logger monolog/monolog
+composer require flytachi/winter-logger monolog/monolog
 
 # Without Monolog (every logger will be a silent NullLogger):
-composer require winter/logger
+composer require flytachi/winter-logger
 ```
 
 Monolog is listed as `suggest` in `composer.json` so it is never installed

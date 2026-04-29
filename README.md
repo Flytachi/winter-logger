@@ -1,9 +1,9 @@
 # Winter Logger
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/winter/logger.svg)](https://packagist.org/packages/winter/logger)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/flytachi/winter-logger.svg)](https://packagist.org/packages/flytachi/winter-logger)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
-**winter/logger** — multi-runtime PSR-3 logger for the Winter framework.
+**flytachi/winter-logger** — multi-runtime PSR-3 logger for the Winter framework.
 Wraps Monolog with coroutine-safe context isolation, Spring Boot-style output,
 and a Java-style static factory.
 
@@ -23,13 +23,13 @@ that boots it.
 ## Installation
 
 ```bash
-composer require winter/logger monolog/monolog
+composer require flytachi/winter-logger monolog/monolog
 ```
 
 Monolog-free (every logger will be a no-op `NullLogger`):
 
 ```bash
-composer require winter/logger
+composer require flytachi/winter-logger
 ```
 
 ---
