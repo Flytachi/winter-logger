@@ -1,0 +1,43 @@
+{
+    "name": "winter/logger",
+    "description": "Multi-runtime PSR-3 logger for Winter framework (FPM, Swoole, CLI)",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["logger", "psr-3", "monolog", "swoole", "fpm", "winter"],
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-detail": "vendor/bin/phpunit --testdox"
+    },
+    "support": {
+        "source": "https://github.com/flytachi/winter-logger"
+    },
+    "autoload": {
+        "psr-4": {
+            "Flytachi\\Winter\\Logger\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Flytachi\\Winter\\Logger\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=8.3",
+        "psr/log": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "@stable",
+        "monolog/monolog": "@stable"
+    },
+    "suggest": {
+        "monolog/monolog": "Required for actual logging (^3.5). Without it all loggers silently become NullLogger.",
+        "ext-swoole": "For Swoole runtime with coroutine-local context isolation",
+        "ext-openswoole": "Alternative to ext-swoole"
+    },
+    "authors": [
+        {
+            "name": "Flytachi",
+            "email": "jasur.rakhmatov03@gmail.com"
+        }
+    ]
+}
