@@ -10,12 +10,14 @@ use RuntimeException;
 /**
  * Java-style static logger factory.
  *
- * Bootstrap (once at application start):
+ * Bootstrap (once at application start, done by the framework):
  *   LoggerFactory::setManager($manager);
+ *   LoggerFactory::setDefaultChannel('http'); // or 'cli'
  *
- * Usage anywhere in the code:
- *   LoggerFactory::getLogger(UserService::class, 'http')->info('user created');
- *   LoggerFactory::getLogger($this, 'cli')->warning('job slow');
+ * Usage anywhere in application code:
+ *   LoggerFactory::getLogger(UserService::class)->info('user created');
+ *   LoggerFactory::getLogger($this)->warning('slow');
+ *   LoggerFactory::getLogger(MyJob::class, 'cli')->debug('override channel');
  *   LoggerFactory::channel('http')->info('raw channel');
  *
  * The class name becomes the Monolog channel name in log output so you can
@@ -25,6 +27,8 @@ use RuntimeException;
 final class LoggerFactory
 {
     private static ?LoggerManager $manager = null;
+
+    private static string $defaultChannel = 'cli';
 
     /** @var array<string, LoggerInterface> keyed by "channel:ClassName" */
     private static array $cache = [];
@@ -38,17 +42,30 @@ final class LoggerFactory
     }
 
     /**
-     * Get a logger named after a class on the given channel.
-     *
-     * @param string|object $class  FQCN, ::class constant, or $this
-     * @param string        $channel  'http' | 'cli' | any custom channel
+     * Set the default channel used by getLogger() when no channel is specified.
+     * Called by the framework kernel based on runtime (FPM/Swoole → 'http', CLI → 'cli').
      */
-    public static function getLogger(string|object $class, string $channel): LoggerInterface
+    public static function setDefaultChannel(string $channel): void
+    {
+        self::$defaultChannel = $channel;
+        self::$cache          = [];
+    }
+
+    /**
+     * Get a logger named after a class.
+     *
+     * Uses the default channel set by the kernel unless overridden explicitly.
+     *
+     * @param string|object $class    FQCN, ::class constant, or $this
+     * @param string|null   $channel  Override channel; null = use default set by kernel
+     */
+    public static function getLogger(string|object $class, ?string $channel = null): LoggerInterface
     {
         $fqcn     = is_object($class) ? $class::class : $class;
-        $cacheKey = $channel . ':' . $fqcn;
+        $ch       = $channel ?? self::$defaultChannel;
+        $cacheKey = $ch . ':' . $fqcn;
 
-        return self::$cache[$cacheKey] ??= self::resolve($fqcn, $channel);
+        return self::$cache[$cacheKey] ??= self::resolve($fqcn, $ch);
     }
 
     /**
