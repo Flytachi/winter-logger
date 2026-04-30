@@ -77,6 +77,14 @@ final class LoggerFactory
     }
 
     /**
+     * Get the default channel logger. Used by the Log facade.
+     */
+    public static function logger(): LoggerInterface
+    {
+        return self::manager()->channel(self::$defaultChannel);
+    }
+
+    /**
      * Reset per-class cache. Useful in daemons after config reload or in tests.
      */
     public static function reset(): void
