@@ -23,10 +23,8 @@ final class SpringLineFormatter extends NormalizerFormatter
         $level    = $this->levelLabel($record->level);
         $channel  = $record->channel;
 
-        $extra = $record->extra;
-        $name  = isset($extra['class']) ? ' (' . $this->shortName((string) $extra['class']) . ')' : '';
-
-        $data = array_merge($record->context, $extra);
+        $data = array_merge($record->context, $record->extra);
+        $name = isset($data['class']) ? ' (' . $this->shortName((string) $data['class']) . ')' : '';
         $tail = empty($data) ? '' : ' ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         return "[{$datetime}] [{$level}] -{$channel}-{$name}: {$record->message}{$tail}\n";
