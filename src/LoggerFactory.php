@@ -33,7 +33,9 @@ final class LoggerFactory
     /** @var array<string, LoggerInterface> keyed by "channel:ClassName" */
     private static array $cache = [];
 
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 
     public static function setManager(LoggerManager $manager): void
     {

@@ -41,7 +41,8 @@ final class LoggerManager
     public function __construct(
         private readonly ContextStorage $contextStorage,
         private readonly array $channels = [],
-    ) {}
+    ) {
+    }
 
     public function channel(string $name): LoggerInterface
     {

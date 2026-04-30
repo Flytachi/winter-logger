@@ -16,7 +16,8 @@ final class ContextInjectingProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly ContextStorage $storage,
-    ) {}
+    ) {
+    }
 
     public function __invoke(LogRecord $record): LogRecord
     {

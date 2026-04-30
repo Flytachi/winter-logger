@@ -23,7 +23,8 @@ final class Logger implements LoggerInterface
         private readonly MonologLogger $monolog,
         private readonly ContextStorage $contextStorage,
         private readonly array $boundContext = [],
-    ) {}
+    ) {
+    }
 
     public function withContext(array $context): static
     {

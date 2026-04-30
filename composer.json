@@ -26,8 +26,9 @@
         "psr/log": "^3.0"
     },
     "require-dev": {
+        "monolog/monolog": "@stable",
         "phpunit/phpunit": "@stable",
-        "monolog/monolog": "@stable"
+        "squizlabs/php_codesniffer": "@stable"
     },
     "suggest": {
         "monolog/monolog": "Required for actual logging (^3.5). Without it all loggers silently become NullLogger.",

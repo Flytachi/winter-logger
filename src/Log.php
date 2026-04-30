@@ -17,7 +17,9 @@ namespace Flytachi\Winter\Logger;
  */
 final class Log
 {
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 
     public static function debug(string $message, array $context = []): void
     {
