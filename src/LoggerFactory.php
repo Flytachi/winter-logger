@@ -94,12 +94,8 @@ final class LoggerFactory
             return $base;
         }
 
-        // Give this logger the short class name as Monolog channel so it shows
-        // in log output; keep the full FQCN in bound context for searchability.
-        $monolog = $base->monolog()->withName(self::shortName($fqcn));
-
         return new Logger(
-            monolog: $monolog,
+            monolog: $base->monolog(),
             contextStorage: $manager->contextStorage(),
             boundContext: ['class' => $fqcn],
         );

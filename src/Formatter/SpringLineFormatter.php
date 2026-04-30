@@ -11,8 +11,9 @@ use Monolog\LogRecord;
  * Spring Boot-style single-line formatter.
  *
  * Output examples:
- *   [2024-01-01 12:00:00] [INFO ] [http]: User logged in {"request_id":"abc"}
- *   [2024-01-01 12:00:00] [ERROR] [UserService]: DB timeout {"class":"App\\Service\\UserService"}
+ *   [2024-01-01 12:00:00] [INFO ] -http-: User logged in {"request_id":"abc"}
+ *   [2024-01-01 12:00:00] [DEBUG] -http- (UserService): db query {"request_id":"abc","class":"App\\UserService"}
+ *   [2024-01-01 12:00:00] [ERROR] -cli-: job failed
  */
 final class SpringLineFormatter extends NormalizerFormatter
 {
@@ -22,13 +23,19 @@ final class SpringLineFormatter extends NormalizerFormatter
         $level    = $this->levelLabel($record->level);
         $channel  = $record->channel;
 
-        $tail = '';
-        $data = array_merge($record->context, $record->extra);
-        if (!empty($data)) {
-            $tail = ' ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        }
+        $extra = $record->extra;
+        $name  = isset($extra['class']) ? ' (' . $this->shortName((string) $extra['class']) . ')' : '';
 
-        return "[{$datetime}] [{$level}] [{$channel}]: {$record->message}{$tail}\n";
+        $data = array_merge($record->context, $extra);
+        $tail = empty($data) ? '' : ' ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return "[{$datetime}] [{$level}] -{$channel}-{$name}: {$record->message}{$tail}\n";
+    }
+
+    private function shortName(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
     private function levelLabel(\Monolog\Level $level): string
