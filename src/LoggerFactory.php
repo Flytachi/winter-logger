@@ -42,8 +42,30 @@ final class LoggerFactory
     }
 
     /**
+     * Add (or override) a single channel on the current manager.
+     * Called from bootstrap or entry point after Kernel::init():
+     *   LoggerFactory::addChannel('job', Kernel::channelConfig('job'));
+     */
+    public static function addChannel(string $name, array $config): void
+    {
+        self::$manager = self::manager()->withChannel($name, $config);
+        self::$cache   = [];
+    }
+
+    /**
+     * Swap the context storage on the current manager (same channels, new storage).
+     * Called by the entry point when the runtime is known — e.g. Swoole server runner
+     * calls setContextStorage(new CoroutineContext()) before accepting requests.
+     */
+    public static function setContextStorage(\Flytachi\Winter\Logger\Contracts\ContextStorage $storage): void
+    {
+        self::$manager = self::manager()->withContextStorage($storage);
+        self::$cache   = [];
+    }
+
+    /**
      * Set the default channel used by getLogger() when no channel is specified.
-     * Called by the framework kernel based on runtime (FPM/Swoole → 'http', CLI → 'cli').
+     * Called by the entry point: public/index.php → 'http', swoole runner → 'http', cli → 'cli'.
      */
     public static function setDefaultChannel(string $channel): void
     {

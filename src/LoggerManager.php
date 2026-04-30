@@ -54,6 +54,23 @@ final class LoggerManager
     }
 
     /**
+     * Return a new instance with a different context storage (same channels).
+     * Called by the entry point to switch from ProcessContext to CoroutineContext.
+     */
+    public function withContextStorage(ContextStorage $contextStorage): self
+    {
+        return new self($contextStorage, $this->channels);
+    }
+
+    /**
+     * Return a new instance with an additional channel (or override existing).
+     */
+    public function withChannel(string $name, array $config): self
+    {
+        return new self($this->contextStorage, array_merge($this->channels, [$name => $config]));
+    }
+
+    /**
      * Drop all cached channel instances. Useful after config changes in a daemon.
      */
     public function flush(): void
