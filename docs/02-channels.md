@@ -1,16 +1,18 @@
 # Channels — LoggerManager
 
 A **channel** is a named Monolog instance with its own level, format, and output
-target. The framework defines channels; application code picks the right one.
+target. The framework builds channel configs from env vars; the entry point
+activates the right one as default.
 
 ---
 
 ## Default channels in winter-kernel
 
-| Channel | Runtime | Typical use |
-|---------|---------|-------------|
-| `http` | FPM, Swoole | HTTP request handlers, controllers, services |
-| `cli` | CLI, jobs, daemons | Console commands, queue workers, scheduled tasks |
+| Channel | Activated by | Typical use |
+|---------|-------------|-------------|
+| `sys`  | Kernel (always default after `init()`) | System-level events, fallback |
+| `http` | `public/index.php` → `setDefaultChannel('http')` | HTTP handlers, controllers, services |
+| `cli`  | CLI runner → `setDefaultChannel('cli')` | Jobs, queue workers, daemons |
 
 ---
 
@@ -24,6 +26,14 @@ use Flytachi\Winter\Logger\Context\ProcessContext;
 $manager = new LoggerManager(
     contextStorage: new ProcessContext(),
     channels: [
+        'sys' => [
+            'level'        => Level::Warning,
+            'format'       => 'line',
+            'output'       => 'stderr',
+            'file_path'    => null,
+            'file_max'     => 30,
+            'syslog_ident' => 'winter',
+        ],
         'http' => [
             'level'        => Level::Info,
             'format'       => 'line',
@@ -43,7 +53,6 @@ $manager = new LoggerManager(
     ],
 );
 
-// Get a channel logger:
 $logger = $manager->channel('http');
 $logger->info('request handled');
 ```
@@ -70,8 +79,8 @@ creates the Monolog instance; subsequent calls return the same object.
 
 | Value | Handler | Notes |
 |-------|---------|-------|
-| `stdout` | `SafeStreamHandler('php://stdout')` | Safe for Swoole, CLI |
-| `stderr` | `SafeStreamHandler('php://stderr')` | Safe for FPM — stderr goes to FPM error_log, not the HTTP response |
+| `stdout` | `SafeStreamHandler('php://stdout')` | Swoole, CLI |
+| `stderr` | `SafeStreamHandler('php://stderr')` | FPM — safe from broken pipe |
 | `syslog` | `SyslogHandler` | Docker / Kubernetes centralized logging |
 | `file` | `RotatingFileHandler` | Requires `file_path`; rotates daily, keeps `file_max` files |
 | `null` | `NullHandler` | Discards everything — useful in tests |
@@ -85,13 +94,76 @@ independent of the client connection.
 
 ---
 
-## `flush()` — config reload in daemons
+## Adding dynamic channels
 
-Call `flush()` to drop all cached channel instances. The next `channel()` call
-will rebuild them from the original config. Useful after in-process config
-reload in long-running Swoole workers:
+### `withChannel()` — create a new manager with one extra channel
+
+```php
+$manager = $manager->withChannel('job', [
+    'level'     => Level::Debug,
+    'format'    => 'line',
+    'output'    => 'file',
+    'file_path' => '/var/log/app/job.log',
+    'file_max'  => 7,
+    'syslog_ident' => 'winter',
+]);
+```
+
+Returns a **new** `LoggerManager` instance (immutable). The original is unchanged.
+
+### `withContextStorage()` — swap context storage
+
+```php
+// Swoole entry point:
+$manager = $manager->withContextStorage(new CoroutineContext());
+```
+
+Returns a new instance with the same channels but different context storage.
+
+### Via `LoggerFactory::addChannel()`
+
+```php
+// After LoggerFactory::setManager() has been called:
+LoggerFactory::addChannel('job', [
+    'level'     => Level::Debug,
+    'format'    => 'line',
+    'output'    => 'file',
+    'file_path' => '/var/log/app/job.log',
+    'file_max'  => 7,
+    'syslog_ident' => 'winter',
+]);
+```
+
+In winter-kernel this is done via:
+
+```php
+// bootstrap.php — reads LOG_JOB_* from .env automatically:
+Kernel::channel('job');
+```
+
+---
+
+## Unknown channel fallback
+
+If `LoggerFactory::getLogger($class, 'job')` is called and `'job'` is not
+registered, the logger silently falls back to the current **default channel**
+(`sys` / `http` / `cli`). No exception is thrown.
+
+---
+
+## `flush()` — drop channel cache
 
 ```php
 $manager->flush();
-// Channels are now rebuilt on next access
+// All cached Monolog instances are dropped; rebuilt on next channel() call
+```
+
+Useful after in-process config reload in long-running Swoole workers.
+
+---
+
+## `hasChannel()` — check registration
+
+```php
+$manager->hasChannel('job'); // true | false
 ```

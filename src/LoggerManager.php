@@ -48,6 +48,11 @@ final class LoggerManager
         return $this->cache[$name] ??= $this->build($name);
     }
 
+    public function hasChannel(string $name): bool
+    {
+        return isset($this->channels[$name]);
+    }
+
     public function contextStorage(): ContextStorage
     {
         return $this->contextStorage;

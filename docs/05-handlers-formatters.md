@@ -48,25 +48,40 @@ the failure silently — the worker survives, the log line is simply lost.
 
 ### `SpringLineFormatter` (default for `format=line`)
 
-Produces a human-readable single-line format inspired by Spring Boot:
+Produces a human-readable single-line format:
 
 ```
-[datetime] [LEVEL] [channel]: message {json}
+[datetime] [LEVEL] -channel- (ClassName): message {json}
+[datetime] [LEVEL] -channel-: message {json}
 ```
 
-Examples:
+- `-channel-` — always the registered channel name (`http`, `cli`, `sys`, …)
+- `(ClassName)` — short class name, only present when logger was created via
+  `LoggerFactory::getLogger(MyClass::class)`. Absent for raw `channel()` calls.
+- `{json}` — merged `context` + `extra` (request_id, class FQCN, etc.)
+
+**Level labels (fixed 5 chars):**
+
+| Level | Label |
+|-------|-------|
+| Debug | `DEBUG` |
+| Info | `INFO ` |
+| Notice | `NOTIC` |
+| Warning | `WARN ` |
+| Error | `ERROR` |
+| Critical | `CRIT ` |
+| Alert | `ALERT` |
+| Emergency | `EMERG` |
+
+**Examples:**
 
 ```
-[2024-01-01 12:00:00] [INFO ] [http]: request handled {"request_id":"abc-123"}
-[2024-01-01 12:00:00] [ERROR] [UserService]: db timeout {"class":"App\\Service\\UserService","attempt":3}
-[2024-01-01 12:00:00] [DEBUG] [cli]: job started
+[2024-01-01 12:00:00] [INFO ] -http-: request handled {"request_id":"abc-123"}
+[2024-01-01 12:00:00] [DEBUG] -http- (PpaConnectionPool): FPM connection opened: TestDbConfig {"class":"App\\Pool\\PpaConnectionPool"}
+[2024-01-01 12:00:00] [ERROR] -http- (UserService): db timeout {"class":"App\\UserService","attempt":3}
+[2024-01-01 12:00:00] [DEBUG] -cli- (MyJob): step done {"class":"App\\Job\\MyJob"}
+[2024-01-01 12:00:00] [WARN ] -sys-: disk usage high
 ```
-
-**Fields in the JSON tail:**
-- `context` (per-call data passed to `log()`)
-- `extra` (injected by processors, e.g. `request_id` from `ContextStorage`)
-
-Both are merged into one JSON object for readability.
 
 ---
 
@@ -76,7 +91,7 @@ Standard Monolog `JsonFormatter` — one JSON object per line, newline-delimited
 Suitable for log aggregators (Loki, Elasticsearch, Datadog).
 
 ```json
-{"message":"user created","context":{"id":42},"level":200,"level_name":"INFO","channel":"UserService","datetime":"2024-01-01T12:00:00+00:00","extra":{"request_id":"abc-123","class":"App\\Service\\UserService"}}
+{"message":"user created","context":{"id":42,"class":"App\\Service\\UserService"},"level":200,"level_name":"INFO","channel":"http","datetime":"2024-01-01T12:00:00+00:00","extra":{"request_id":"abc-123"}}
 ```
 
 ---

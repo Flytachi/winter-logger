@@ -83,11 +83,12 @@ final class LoggerFactory
      */
     public static function getLogger(string|object $class, ?string $channel = null): LoggerInterface
     {
-        $fqcn     = is_object($class) ? $class::class : $class;
-        $ch       = $channel ?? self::$defaultChannel;
-        $cacheKey = $ch . ':' . $fqcn;
+        $fqcn = is_object($class) ? $class::class : $class;
+        $ch = ($channel !== null && self::manager()->hasChannel($channel))
+            ? $channel
+            : self::$defaultChannel;
 
-        return self::$cache[$cacheKey] ??= self::resolve($fqcn, $ch);
+        return self::$cache[$ch . ':' . $fqcn] ??= self::resolve($fqcn, $ch);
     }
 
     /**

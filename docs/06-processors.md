@@ -71,5 +71,5 @@ $logger->info('login attempt', [
 Log output:
 
 ```
-[2024-01-01 12:00:00] [INFO ] [http]: login attempt {"username":"alice","password":"***","metadata":{"token":"***"}}
+[2024-01-01 12:00:00] [INFO ] -http-: login attempt {"username":"alice","password":"***","metadata":{"token":"***"}}
 ```
