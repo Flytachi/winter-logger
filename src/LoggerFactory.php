@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flytachi\Winter\Logger;
 
+use Flytachi\Winter\Logger\Contracts\ContextStorage;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -20,9 +21,10 @@ use RuntimeException;
  *   LoggerFactory::getLogger(MyJob::class, 'cli')->debug('override channel');
  *   LoggerFactory::channel('http')->info('raw channel');
  *
- * The class name becomes the Monolog channel name in log output so you can
- * filter by class in Kibana / Loki / grep without changing the log format.
- * The full FQCN is stored in context['class'] for exact lookup.
+ * The Monolog channel stays the configured output channel (http, cli, sys, …).
+ * The full FQCN is stored in context['class'] and rendered as "(ShortName)" by
+ * SpringLineFormatter, so you can filter by class in Kibana / Loki / grep without
+ * changing the log format.
  */
 final class LoggerFactory
 {
@@ -110,6 +112,15 @@ final class LoggerFactory
     }
 
     /**
+     * Get the context storage of the current manager.
+     * Use it to set / clear per-request fields (request_id, user_id …).
+     */
+    public static function contextStorage(): ContextStorage
+    {
+        return self::manager()->contextStorage();
+    }
+
+    /**
      * Reset per-class cache. Useful in daemons after config reload or in tests.
      */
     public static function reset(): void
@@ -132,12 +143,6 @@ final class LoggerFactory
             contextStorage: $manager->contextStorage(),
             boundContext: ['class' => $fqcn],
         );
-    }
-
-    private static function shortName(string $fqcn): string
-    {
-        $pos = strrpos($fqcn, '\\');
-        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
     private static function manager(): LoggerManager

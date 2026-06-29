@@ -11,12 +11,22 @@ use Monolog\LogRecord;
  * Spring Boot-style single-line formatter.
  *
  * Output examples:
- *   [2024-01-01 12:00:00] [INFO ] -http-: User logged in {"request_id":"abc"}
- *   [2024-01-01 12:00:00] [DEBUG] -http- (UserService): db query {"request_id":"abc","class":"App\\UserService"}
- *   [2024-01-01 12:00:00] [ERROR] -cli-: job failed
+ *   [2024-01-01 12:00:00] [INFO ] -http- [4821]: User logged in {"request_id":"abc"}
+ *   [2024-01-01 12:00:00] [DEBUG] -http- [4821] (UserService): db query {"request_id":"abc","class":"App\\UserService"}
+ *   [2024-01-01 12:00:00] [ERROR] -cli- [4821]: job failed
  */
 final class SpringLineFormatter extends NormalizerFormatter
 {
+    /**
+     * @param bool $appendNewline Append a trailing newline. Keep true for file/stream
+     *                            output; pass false for syslog (it frames messages itself,
+     *                            so a trailing newline produces a spurious empty record).
+     */
+    public function __construct(private readonly bool $appendNewline = true)
+    {
+        parent::__construct();
+    }
+
     public function format(LogRecord $record): string
     {
         $datetime = $record->datetime->format('Y-m-d H:i:s');
@@ -24,10 +34,12 @@ final class SpringLineFormatter extends NormalizerFormatter
         $channel  = $record->channel;
 
         $data = array_merge($record->context, $record->extra);
+        $pid  = ' [' . getmypid() . ']';
         $name = isset($data['class']) ? ' (' . $this->shortName((string) $data['class']) . ')' : '';
         $tail = empty($data) ? '' : ' ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $eol  = $this->appendNewline ? "\n" : '';
 
-        return "[{$datetime}] [{$level}] -{$channel}-{$name}: {$record->message}{$tail}\n";
+        return "[{$datetime}] [{$level}] -{$channel}-{$pid}{$name}: {$record->message}{$tail}{$eol}";
     }
 
     private function shortName(string $fqcn): string

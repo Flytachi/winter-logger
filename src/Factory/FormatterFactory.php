@@ -11,13 +11,18 @@ use Flytachi\Winter\Logger\Formatter\SpringLineFormatter;
 
 final class FormatterFactory
 {
-    public static function make(string $format): FormatterInterface
+    /**
+     * @param string $format        'line' | 'json'
+     * @param bool   $appendNewline Append a trailing newline. Pass false for syslog,
+     *                              which frames messages itself.
+     */
+    public static function make(string $format, bool $appendNewline = true): FormatterInterface
     {
         return match (strtolower($format)) {
-            'line'  => new SpringLineFormatter(),
+            'line'  => new SpringLineFormatter($appendNewline),
             'json'  => new JsonFormatter(
                 batchMode: JsonFormatter::BATCH_MODE_NEWLINES,
-                appendNewline: true,
+                appendNewline: $appendNewline,
                 ignoreEmptyContextAndExtra: false,
                 includeStacktraces: true,
             ),

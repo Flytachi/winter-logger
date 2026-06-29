@@ -51,11 +51,13 @@ the failure silently — the worker survives, the log line is simply lost.
 Produces a human-readable single-line format:
 
 ```
-[datetime] [LEVEL] -channel- (ClassName): message {json}
-[datetime] [LEVEL] -channel-: message {json}
+[datetime] [LEVEL] -channel- [pid] (ClassName): message {json}
+[datetime] [LEVEL] -channel- [pid]: message {json}
 ```
 
 - `-channel-` — always the registered channel name (`http`, `cli`, `sys`, …)
+- `[pid]` — OS process id of the emitting process (`getmypid()`), always present.
+  Lets you tell forked children apart from the parent in daemons/workers.
 - `(ClassName)` — short class name, only present when logger was created via
   `LoggerFactory::getLogger(MyClass::class)`. Absent for raw `channel()` calls.
 - `{json}` — merged `context` + `extra` (request_id, class FQCN, etc.)
@@ -76,11 +78,11 @@ Produces a human-readable single-line format:
 **Examples:**
 
 ```
-[2024-01-01 12:00:00] [INFO ] -http-: request handled {"request_id":"abc-123"}
-[2024-01-01 12:00:00] [DEBUG] -http- (PpaConnectionPool): FPM connection opened: TestDbConfig {"class":"App\\Pool\\PpaConnectionPool"}
-[2024-01-01 12:00:00] [ERROR] -http- (UserService): db timeout {"class":"App\\UserService","attempt":3}
-[2024-01-01 12:00:00] [DEBUG] -cli- (MyJob): step done {"class":"App\\Job\\MyJob"}
-[2024-01-01 12:00:00] [WARN ] -sys-: disk usage high
+[2024-01-01 12:00:00] [INFO ] -http- [4821]: request handled {"request_id":"abc-123"}
+[2024-01-01 12:00:00] [DEBUG] -http- [4821] (PpaConnectionPool): FPM connection opened: TestDbConfig {"class":"App\\Pool\\PpaConnectionPool"}
+[2024-01-01 12:00:00] [ERROR] -http- [4821] (UserService): db timeout {"class":"App\\UserService","attempt":3}
+[2024-01-01 12:00:00] [DEBUG] -cli- [4821] (MyJob): step done {"class":"App\\Job\\MyJob"}
+[2024-01-01 12:00:00] [WARN ] -sys- [4821]: disk usage high
 ```
 
 ---

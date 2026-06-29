@@ -100,8 +100,8 @@ LoggerFactory::getLogger(MyJob::class, 'cli')->debug('step done');
 
 **Output (`SpringLineFormatter`):**
 ```
-[2024-01-01 12:00:00] [INFO ] -http- (UserService): user created {"id":42,"class":"App\\Service\\UserService"}
-[2024-01-01 12:00:00] [DEBUG] -cli- (MyJob): step done {"class":"App\\Job\\MyJob"}
+[2024-01-01 12:00:00] [INFO ] -http- [4821] (UserService): user created {"id":42,"class":"App\\Service\\UserService"}
+[2024-01-01 12:00:00] [DEBUG] -cli- [4821] (MyJob): step done {"class":"App\\Job\\MyJob"}
 ```
 
 ### Passing `$this`

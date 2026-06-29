@@ -53,7 +53,13 @@ class SpringLineFormatterTest extends TestCase
     public function testOutputContainsChannel(): void
     {
         $output = $this->formatter->format($this->makeRecord(channel: 'UserService'));
-        $this->assertStringContainsString('[UserService]', $output);
+        $this->assertStringContainsString('-UserService-', $output);
+    }
+
+    public function testOutputContainsPid(): void
+    {
+        $output = $this->formatter->format($this->makeRecord(channel: 'http'));
+        $this->assertMatchesRegularExpression('/-http- \[\d+\]/', $output);
     }
 
     public function testOutputContainsMessage(): void
@@ -66,6 +72,14 @@ class SpringLineFormatterTest extends TestCase
     {
         $output = $this->formatter->format($this->makeRecord());
         $this->assertStringEndsWith("\n", $output);
+    }
+
+    public function testNoTrailingNewlineWhenDisabled(): void
+    {
+        $formatter = new SpringLineFormatter(appendNewline: false);
+        $output    = $formatter->format($this->makeRecord(message: 'no eol'));
+        $this->assertStringEndsWith('no eol', $output);
+        $this->assertStringNotContainsString("\n", $output);
     }
 
     // ─── level padding ───────────────────────────────────────────────────────
@@ -127,7 +141,7 @@ class SpringLineFormatterTest extends TestCase
         );
 
         $this->assertMatchesRegularExpression(
-            '/^\[2024-01-15 12:00:00\] \[INFO \] \[OrderService\]: order placed \{.*\}\n$/',
+            '/^\[2024-01-15 12:00:00\] \[INFO \] -OrderService- \[\d+\]: order placed \{.*\}\n$/',
             $output,
         );
         $this->assertStringContainsString('"order_id":7', $output);

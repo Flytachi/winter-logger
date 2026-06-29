@@ -99,8 +99,8 @@ $log->info('done');
 **Output (line format)**
 
 ```
-[2024-01-01 12:00:00] [INFO ] [UserService]: user created {"id":42,"class":"App\\Service\\UserService"}
-[2024-01-01 12:00:00] [WARN ] [http]: rate limit hit
+[2024-01-01 12:00:00] [INFO ] -http- [4821] (UserService): user created {"id":42,"class":"App\\Service\\UserService"}
+[2024-01-01 12:00:00] [WARN ] -http- [4821]: rate limit hit
 ```
 
 ---

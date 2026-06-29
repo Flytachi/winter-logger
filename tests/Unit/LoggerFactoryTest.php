@@ -85,11 +85,13 @@ class LoggerFactoryTest extends TestCase
         $this->assertNotSame($http, $cli);
     }
 
-    public function testGetLoggerMonologChannelIsShortClassName(): void
+    public function testGetLoggerMonologChannelIsConfiguredChannel(): void
     {
+        // The Monolog channel stays the configured output channel; the class is
+        // carried in bound context (rendered as "(ShortName)" by the formatter).
         $logger = LoggerFactory::getLogger(self::class, 'http');
         $this->assertInstanceOf(Logger::class, $logger);
-        $this->assertSame('LoggerFactoryTest', $logger->monolog()->getName());
+        $this->assertSame('http', $logger->monolog()->getName());
     }
 
     public function testGetLoggerBoundContextContainsFqcn(): void
