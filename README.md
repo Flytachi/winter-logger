@@ -1,6 +1,7 @@
 # Winter Logger
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/flytachi/winter-logger.svg)](https://packagist.org/packages/flytachi/winter-logger)
+[![PHP Version Require](https://img.shields.io/packagist/php-v/flytachi/winter-logger.svg?style=flat-square)](https://packagist.org/packages/flytachi/winter-logger)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
 **flytachi/winter-logger** — multi-runtime PSR-3 logger for the Winter framework.
