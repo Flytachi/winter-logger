@@ -94,6 +94,16 @@ final class LoggerManager
             ?? throw new InvalidArgumentException("Logger channel [{$channel}] is not configured.");
 
         $monolog = new MonologLogger($channel);
+
+        // Monolog's reentrancy guard tracks depth per PHP Fiber; Swoole coroutines
+        // are not Fibers, so concurrent coroutine logging shares one counter and
+        // false-triggers "A possible infinite logging loop was detected", dropping
+        // records. Disable it when Swoole is present (its own docs advise this for
+        // async handlers).
+        if (extension_loaded('swoole')) {
+            $monolog->useLoggingLoopDetection(false);
+        }
+
         $monolog->pushProcessor(new ContextInjectingProcessor($this->contextStorage));
 
         $handler = HandlerFactory::make($config);
