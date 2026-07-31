@@ -110,7 +110,11 @@ final class LoggerManager
         if (method_exists($handler, 'setFormatter')) {
             // Syslog frames each message itself — a trailing newline would emit a spurious empty record.
             $appendNewline = ($config['output'] ?? null) !== 'syslog';
-            $handler->setFormatter(FormatterFactory::make($config['format'] ?? 'line', $appendNewline));
+            $handler->setFormatter(FormatterFactory::make(
+                $config['format'] ?? 'line',
+                $appendNewline,
+                (bool) ($config['color'] ?? false),
+            ));
         }
         $monolog->pushHandler($handler);
 
