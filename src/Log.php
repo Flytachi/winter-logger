@@ -14,6 +14,12 @@ namespace Flytachi\Winter\Logger;
  *   Log::info('user created', ['id' => $id]);
  *   Log::error('payment failed', ['order' => $orderId]);
  *   Log::debug('cache miss');
+ *
+ * Covers seven of the eight PSR-3 levels. `emergency` is deliberately absent — it is not
+ * an oversight, so do not "complete the set". Where it is genuinely warranted, reach for
+ * the logger itself: `LoggerFactory::logger()->emergency(...)`.
+ *
+ * @link https://winterframe.net/packages/logger/api-reference#log The seven levels the facade carries
  */
 final class Log
 {

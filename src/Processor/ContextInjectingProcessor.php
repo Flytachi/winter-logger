@@ -11,6 +11,8 @@ use Flytachi\Winter\Logger\Contracts\ContextStorage;
 /**
  * Injects runtime-scoped storage context (request_id, user_id, …) into
  * every log record's "extra" field so it appears in every line automatically.
+ *
+ * @link https://winterframe.net/packages/logger/api-reference#contextinjectingprocessor Where context joins the record
  */
 final class ContextInjectingProcessor implements ProcessorInterface
 {

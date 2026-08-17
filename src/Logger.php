@@ -14,6 +14,8 @@ use Flytachi\Winter\Logger\Contracts\LoggerInterface;
  * Winter logger — wraps a Monolog channel and merges per-instance bound context
  * into every log call. Runtime-scoped context (request_id, etc.) is injected
  * separately by ContextInjectingProcessor on the Monolog side.
+ *
+ * @link https://winterframe.net/packages/logger/api-reference#logger withContext(), levels, the Monolog escape hatch
  */
 final class Logger implements LoggerInterface
 {

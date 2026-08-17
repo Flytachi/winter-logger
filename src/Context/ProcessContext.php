@@ -10,6 +10,8 @@ use Flytachi\Winter\Logger\Contracts\ContextStorage;
  * Process-scoped context. One array per process lifetime.
  * Safe for FPM (one request = one process) and CLI jobs.
  * NOT safe for Swoole — coroutines share the same process, use CoroutineContext there.
+ *
+ * @link https://winterframe.net/packages/logger/context-isolation Why context is per unit of work
  */
 final class ProcessContext implements ContextStorage
 {

@@ -14,6 +14,8 @@ use Monolog\LogRecord;
  *   [2024-01-01 12:00:00] [INFO ] -http- [4821]: User logged in {"request_id":"abc"}
  *   [2024-01-01 12:00:00] [DEBUG] -http- [4821] (UserService): db query {"request_id":"abc","class":"App\\UserService"}
  *   [2024-01-01 12:00:00] [ERROR] -cli- [4821]: job failed
+ *
+ * @link https://winterframe.net/packages/logger/log-format What each segment of the line means
  */
 final class SpringLineFormatter extends NormalizerFormatter
 {
@@ -75,7 +77,7 @@ final class SpringLineFormatter extends NormalizerFormatter
             \Monolog\Level::Error     => "\033[31m",    // red
             \Monolog\Level::Critical  => "\033[91m",    // bright red
             \Monolog\Level::Alert     => "\033[1;91m",  // bold bright red
-            \Monolog\Level::Emergency => "\033[97;41m", // white on red
+            \Monolog\Level::Emergency => "\033[1;4;91m", // bold underline bright red
         };
     }
 

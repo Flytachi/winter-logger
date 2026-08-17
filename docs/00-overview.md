@@ -60,13 +60,7 @@ SafeStreamHandler (extends StreamHandler)
 
 ---
 
-## Documentation index
+## Where to go next
 
-| # | File | Contents |
-|---|------|----------|
-| 01 | [01-installation.md](01-installation.md) | Installation, Monolog as optional dependency |
-| 02 | [02-channels.md](02-channels.md) | `LoggerManager`, channel config, dynamic channels |
-| 03 | [03-logger-factory.md](03-logger-factory.md) | `LoggerFactory`, `Log` facade, entry-point setup |
-| 04 | [04-context.md](04-context.md) | `ProcessContext`, `CoroutineContext`, request lifecycle |
-| 05 | [05-handlers-formatters.md](05-handlers-formatters.md) | Handlers, formatters, log format |
-| 06 | [06-processors.md](06-processors.md) | `ContextInjectingProcessor`, `SensitiveMaskingProcessor` |
+The page map, with a route for each common question, lives in
+[README.md](README.md) — kept in one place so the two cannot drift apart.

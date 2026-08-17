@@ -4,22 +4,17 @@
 [![PHP Version Require](https://img.shields.io/packagist/php-v/flytachi/winter-logger.svg?style=flat-square)](https://packagist.org/packages/flytachi/winter-logger)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
-**flytachi/winter-logger** — multi-runtime PSR-3 logger for the Winter framework.
-Wraps Monolog with coroutine-safe context isolation, Spring Boot-style output,
-and a Java-style static factory.
+A PSR-3 logger that stays correct when one process serves many requests at once. It wraps
+Monolog with per-unit-of-work context isolation, Spring Boot-style output and a Java-style
+static factory, so the same logging code behaves the same under FPM, CLI and Swoole.
 
-The library is **infrastructure-agnostic**: it knows nothing about env vars,
-Docker, SAPI, or Swoole detection — that responsibility belongs to the framework
-that boots it.
+The library is **infrastructure-agnostic**: it never reads env vars and never detects
+Docker, the SAPI or Swoole. The framework that boots it builds the channel config and
+passes it in — which is what keeps the package testable and usable outside Winter.
+
+📖 **[Documentation](https://winterframe.net/packages/logger)** · [Quick start](https://winterframe.net/packages/logger/quickstart) · [API reference](https://winterframe.net/packages/logger/api-reference) · [Channel config](https://winterframe.net/packages/logger/channel-config)
 
 ---
-
-## Requirements
-
-- PHP >= 8.3
-- `psr/log` ^3.0
-- `monolog/monolog` ^3.5 *(suggested — without it every logger silently becomes `NullLogger`)*
-- `ext-swoole` *(optional — required only for `CoroutineContext`)*
 
 ## Installation
 
@@ -27,146 +22,153 @@ that boots it.
 composer require flytachi/winter-logger monolog/monolog
 ```
 
-Monolog-free (every logger will be a no-op `NullLogger`):
-
-```bash
-composer require flytachi/winter-logger
-```
+Requires PHP **8.3+** and `psr/log ^3.0`. `monolog/monolog ^3.5` is a suggestion rather
+than a dependency — install without it and every channel resolves to a `NullLogger` instead
+of failing. `ext-swoole` is needed only for `CoroutineContext`.
 
 ---
 
-## Quick Start
+## Quick start
 
-### 1. Build a `LoggerManager`
-
-The manager accepts a ready-made config — the **framework** resolves env vars
-and infrastructure details before calling this:
+Build a manager with your channels and hand it to the factory once at bootstrap:
 
 ```php
+use Flytachi\Winter\Logger\{LoggerFactory, LoggerManager};
+use Flytachi\Winter\Logger\Context\ProcessContext;
 use Monolog\Level;
-use Flytachi\Winter\Logger\LoggerManager;
-use Flytachi\Winter\Logger\Context\ProcessContext;   // FPM / CLI
-// use Flytachi\Winter\Logger\Context\CoroutineContext; // Swoole
 
-$manager = new LoggerManager(
-    contextStorage: new ProcessContext(),
+LoggerFactory::setManager(new LoggerManager(
+    contextStorage: new ProcessContext(),      // CoroutineContext under Swoole
     channels: [
-        'http' => [
-            'level'        => Level::Info,
-            'format'       => 'line',       // 'line' | 'json'
-            'output'       => 'stderr',     // 'stdout' | 'stderr' | 'syslog' | 'file' | 'null'
-            'file_path'    => null,
-            'file_max'     => 30,
-            'syslog_ident' => 'winter',
-        ],
-        'cli' => [
-            'level'        => Level::Debug,
-            'format'       => 'line',
-            'output'       => 'stdout',
-            'file_path'    => null,
-            'file_max'     => 30,
-            'syslog_ident' => 'winter',
-        ],
+        'http' => ['level' => Level::Info,  'format' => 'line', 'output' => 'stderr'],
+        'cli'  => ['level' => Level::Debug, 'format' => 'line', 'output' => 'stdout', 'color' => true],
     ],
-);
+));
+
+LoggerFactory::setDefaultChannel('http');
 ```
 
-### 2. Register with `LoggerFactory`
+Then log from anywhere:
 
 ```php
-use Flytachi\Winter\Logger\LoggerFactory;
+use Flytachi\Winter\Logger\{Log, LoggerFactory};
 
-LoggerFactory::setManager($manager);
+Log::info('user created', ['id' => 42]);                             // default channel
+LoggerFactory::getLogger(UserService::class)->info('cache warmed');  // named after the class
+LoggerFactory::channel('cli')->warning('rate limit hit');            // a specific channel
 ```
 
-### 3. Log from anywhere
-
-```php
-use Flytachi\Winter\Logger\LoggerFactory;
-
-// Per-class logger — Java-style:
-LoggerFactory::getLogger(UserService::class, 'http')->info('user created', ['id' => 42]);
-LoggerFactory::getLogger($this, 'cli')->debug('job started');
-
-// Raw channel:
-LoggerFactory::channel('http')->warning('rate limit hit');
-
-// Bound context — fields appear in every subsequent call:
-$log = LoggerFactory::getLogger(self::class, 'http')->withContext(['request_id' => $id]);
-$log->info('processing');
-$log->info('done');
+```
+[2026-01-01 12:00:00] [INFO ] -http- [4821]: user created {"id":42}
+[2026-01-01 12:00:00] [INFO ] -http- [4821] (UserService): cache warmed {"class":"UserService"}
+[2026-01-01 12:00:00] [WARN ] -cli-  [4821]: rate limit hit
 ```
 
-**Output (line format)**
+The last line goes to `cli`, which sits at `Debug` — a `debug()` call on the default `http`
+channel above would have been filtered out, since that one is configured at `Info`.
 
-```
-[2024-01-01 12:00:00] [INFO ] -http- [4821] (UserService): user created {"id":42,"class":"App\\Service\\UserService"}
-[2024-01-01 12:00:00] [WARN ] -http- [4821]: rate limit hit
-```
+---
+
+## What you get
+
+- **Context that cannot leak** — fields set once per request appear in every record, and
+  live in the coroutine under Swoole, in the process under FPM and CLI.
+- **Per-class loggers** — `LoggerFactory::getLogger(self::class)` names the record after the
+  class that wrote it, cached per class.
+- **Bound context** — `withContext([...])` returns a logger carrying those fields into every
+  later call, without mutating the original.
+- **Five outputs** — `stdout`, `stderr`, `syslog`, rotating `file`, and `null` for tests.
+- **Two formats** — a readable line for humans, JSON for collectors, with optional ANSI
+  colour on the line.
+- **Sensitive-value masking** — passwords and tokens are replaced before a record is
+  written, not after it is read.
+- **Survives a closed pipe** — a `SIGPIPE`-safe stream handler, so a reader that went away
+  cannot take the process down.
+- **Monolog optional** — absent, everything degrades to `NullLogger`; logging never prevents
+  a boot.
 
 ---
 
 ## Request-scoped context
 
-Set fields once at the start of a request/job and they appear in every log line
-automatically via `ContextInjectingProcessor`:
+Set the fields once at the start of the unit of work and every record picks them up:
 
 ```php
-// At request start (FPM middleware / Swoole onRequest):
-$manager->contextStorage()->set('request_id', $requestId);
-$manager->contextStorage()->set('user_id',    $userId);
+$storage = LoggerFactory::contextStorage();
 
-// At request end — must clear in long-running processes to prevent leaks:
-$manager->contextStorage()->clear();
+$storage->set('request_id', $requestId);
+$storage->set('user_id', $userId);
+
+// ... anywhere downstream
+Log::info('processing');   // carries request_id and user_id
+
+$storage->clear();         // at the end — mandatory in a long-running process
 ```
 
-For **Swoole** use `CoroutineContext` — it isolates context per coroutine so
-concurrent requests never bleed into each other.
-
----
-
-## Channel config reference
-
-| Key | Type | Description |
-|-----|------|-------------|
-| `level` | `Monolog\Level` | Minimum level to handle |
-| `format` | `'line'` \| `'json'` | Log format |
-| `output` | `'stdout'` \| `'stderr'` \| `'syslog'` \| `'file'` \| `'null'` | Where to write |
-| `file_path` | `string\|null` | Required when `output=file` |
-| `file_max` | `int` | Max rotated files to keep (default `30`) |
-| `syslog_ident` | `string` | Syslog process identifier (default `'winter'`) |
-
----
-
-## Processors
-
-**`ContextInjectingProcessor`** is added to every channel automatically — no config needed.
-
-**`SensitiveMaskingProcessor`** is optional. Add it after building the manager:
-
-```php
-use Flytachi\Winter\Logger\Processor\SensitiveMaskingProcessor;
-
-$monolog = $manager->channel('http')->monolog();
-$monolog->pushProcessor(new SensitiveMaskingProcessor(['my_secret']));
-```
-
-Default masked keys: `password`, `token`, `secret`, `api_key`, `authorization`,
-`cookie`, `credit_card`, `cvv`, `ssn`, `pin`, and more.
+Under Swoole, pass `CoroutineContext` instead of `ProcessContext` and each concurrent
+request gets its own bag — see
+[Context isolation](https://winterframe.net/packages/logger/context-isolation).
 
 ---
 
 ## Documentation
 
-| File | Topic |
-|------|-------|
-| [00-overview.md](docs/00-overview.md) | Architecture — how the pieces fit together |
-| [01-installation.md](docs/01-installation.md) | Installation, optional Monolog |
-| [02-channels.md](docs/02-channels.md) | `LoggerManager`, channel config, output types |
-| [03-logger-factory.md](docs/03-logger-factory.md) | `LoggerFactory`, `getLogger`, `withContext` |
-| [04-context.md](docs/04-context.md) | `ProcessContext`, `CoroutineContext`, lifecycle |
-| [05-handlers-formatters.md](docs/05-handlers-formatters.md) | `SafeStreamHandler`, formatters, broken pipe |
-| [06-processors.md](docs/06-processors.md) | `ContextInjectingProcessor`, `SensitiveMaskingProcessor` |
+The user-facing documentation lives at **[winterframe.net/packages/logger](https://winterframe.net/packages/logger)**
+(the link picks your language; RU and EN are both complete).
+
+**Start here**
+
+| Page | What it answers |
+|------|-----------------|
+| [Introduction](https://winterframe.net/packages/logger/intro) | What the package is, and what it adds to Monolog |
+| [Installation](https://winterframe.net/packages/logger/installation) | Requirements, optional Monolog, Swoole |
+| [Quick start](https://winterframe.net/packages/logger/quickstart) | Bootstrap, first channel, first record |
+| [Mental model](https://winterframe.net/packages/logger/mental-model) | Storage, manager, factory, facade — who does what |
+
+**Guides**
+
+| Page | What it answers |
+|------|-----------------|
+| [Framework integration](https://winterframe.net/packages/logger/framework-integration) | Wiring it into an application's entry point |
+| [Request context](https://winterframe.net/packages/logger/request-context) | Attaching fields to every record of a request |
+| [Swoole coroutines](https://winterframe.net/packages/logger/swoole-coroutines) | Keeping context isolated under concurrency |
+| [Dynamic channels](https://winterframe.net/packages/logger/dynamic-channels) | Adding a channel after bootstrap |
+| [Masking sensitive data](https://winterframe.net/packages/logger/mask-sensitive-data) | Keeping secrets out of the log |
+
+**Reference**
+
+| Page | What it answers |
+|------|-----------------|
+| [API reference](https://winterframe.net/packages/logger/api-reference) | Every class and method |
+| [Channel config](https://winterframe.net/packages/logger/channel-config) | Each config key, output target and format |
+| [Log format](https://winterframe.net/packages/logger/log-format) | What each segment of a line means |
+
+**Deep dive**
+
+| Page | What it answers |
+|------|-----------------|
+| [Log record lifecycle](https://winterframe.net/packages/logger/log-record-lifecycle) | What happens between the call and the write |
+| [Context isolation](https://winterframe.net/packages/logger/context-isolation) | Why storage belongs to a unit of work |
+| [Output and broken pipe](https://winterframe.net/packages/logger/output-and-broken-pipe) | Surviving a reader that went away |
+| [Monolog optional](https://winterframe.net/packages/logger/monolog-optional) | What degrades without it, and how quietly |
+
+Classes in this package carry an `@link` to their page, so the same documentation is one
+click away from your IDE.
+
+---
+
+## Contributing
+
+Internal technical notes — exact contracts, invariants, and the reasoning behind decisions
+that are not obvious from the code — live in [`docs/`](docs/README.md). Read that before
+changing how a record is built.
+
+```bash
+composer test        # phpunit
+composer test-detail # phpunit --testdox
+composer cs-check    # phpcs
+composer cs-fix      # phpcbf
+```
 
 ---
 

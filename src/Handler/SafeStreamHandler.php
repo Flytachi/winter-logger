@@ -16,6 +16,8 @@ use Monolog\LogRecord;
  *
  * For FPM use php://stderr (goes to FPM error_log, not the HTTP response).
  * For Swoole use php://stdout (Swoole's HTTP response is independent).
+ *
+ * @link https://winterframe.net/packages/logger/output-and-broken-pipe Surviving a closed stdout
  */
 final class SafeStreamHandler extends StreamHandler
 {

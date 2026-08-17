@@ -12,6 +12,11 @@ use Monolog\Handler\SyslogHandler;
 use Monolog\Level;
 use Flytachi\Winter\Logger\Handler\SafeStreamHandler;
 
+/**
+ * Builds the Monolog handler a channel asks for — stdout, stderr, syslog, file or null.
+ *
+ * @link https://winterframe.net/packages/logger/channel-config Every output target and what it needs
+ */
 final class HandlerFactory
 {
     /**

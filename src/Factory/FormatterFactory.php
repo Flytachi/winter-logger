@@ -9,6 +9,11 @@ use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\JsonFormatter;
 use Flytachi\Winter\Logger\Formatter\SpringLineFormatter;
 
+/**
+ * Builds the formatter a channel asks for: `line` (human) or `json` (machine).
+ *
+ * @link https://winterframe.net/packages/logger/log-format Both formats, field by field
+ */
 final class FormatterFactory
 {
     /**

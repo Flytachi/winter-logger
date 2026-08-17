@@ -72,6 +72,11 @@ creates the Monolog instance; subsequent calls return the same object.
 | `file_path` | `string\|null` | when `output=file` | Absolute path to log file |
 | `file_max` | `int` | no (default `30`) | Max rotated files to keep |
 | `syslog_ident` | `string` | no (default `'winter'`) | Syslog process identifier |
+| `color` | `bool` | no (default `false`) | ANSI-colour the line output — level, channel, class. Ignored by `format: 'json'` |
+
+Turn `color` on for a channel a human reads in a terminal — `cli`, typically — and
+leave it off for anything a machine collects: the escape sequences would land in the
+file or in the aggregator verbatim.
 
 ---
 

@@ -15,6 +15,8 @@ use Flytachi\Winter\Logger\Contracts\ContextStorage;
  *
  * Falls back to a static array when called outside a coroutine
  * (e.g. during server bootstrap or in CLI mode).
+ *
+ * @link https://winterframe.net/packages/logger/swoole-coroutines Per-coroutine isolation under Swoole
  */
 final class CoroutineContext implements ContextStorage
 {

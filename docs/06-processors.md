@@ -31,9 +31,11 @@ the processor returns the record unchanged — zero overhead when no context is 
 
 ## `SensitiveMaskingProcessor` *(optional)*
 
-Redacts sensitive values from `context` and `extra` before they reach any
-handler. Matching is **case-insensitive** on keys. Nested arrays are traversed
-recursively.
+Redacts sensitive values before they reach any handler. Matching is
+**case-insensitive** on keys, and nested arrays are traversed recursively.
+
+The scope is the call's `context`. Fields coming from the context storage are
+**not** covered by default — see [Processor order](#processor-order) below.
 
 ```php
 use Flytachi\Winter\Logger\Processor\SensitiveMaskingProcessor;
@@ -73,3 +75,31 @@ Log output:
 ```
 [2024-01-01 12:00:00] [INFO ] -http- [4821]: login attempt {"username":"alice","password":"***","metadata":{"token":"***"}}
 ```
+
+### Processor order
+
+Monolog runs its processors top to bottom, and `pushProcessor()` **prepends**. The
+manager already pushed `ContextInjectingProcessor` while building the channel, so a
+masking processor added afterwards lands ahead of it:
+
+```
+0. SensitiveMaskingProcessor   ← runs first: extra is still empty
+1. ContextInjectingProcessor   ← merges the context fields in afterwards
+```
+
+The call's `context` is present from the start, so it is masked. A secret placed in
+the context storage is not — it is merged in after masking has already run, and
+reaches the log in the clear.
+
+To cover those too, put masking underneath the context processor:
+
+```php
+$monolog = $manager->channel('http')->monolog();
+
+$contextProcessor = $monolog->popProcessor();          // ContextInjectingProcessor
+$monolog->pushProcessor(new SensitiveMaskingProcessor());
+$monolog->pushProcessor($contextProcessor);            // back on top — runs first again
+```
+
+The cheaper answer is to keep secrets out of the context storage: it is meant for
+request and user identifiers.

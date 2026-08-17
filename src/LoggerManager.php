@@ -28,7 +28,10 @@ use Flytachi\Winter\Logger\Processor\ContextInjectingProcessor;
  *   'file_path'    => string|null,   // required when output=file
  *   'file_max'     => int,           // default 30
  *   'syslog_ident' => string,        // default 'winter'
+ *   'color'        => bool,          // default false; ANSI colour, 'line' format only
  * ]
+ *
+ * @link https://winterframe.net/packages/logger/channel-config The channel config shape, key by key
  */
 final class LoggerManager
 {

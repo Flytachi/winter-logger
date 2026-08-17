@@ -25,6 +25,8 @@ use RuntimeException;
  * The full FQCN is stored in context['class'] and rendered as "(ShortName)" by
  * SpringLineFormatter, so you can filter by class in Kibana / Loki / grep without
  * changing the log format.
+ *
+ * @link https://winterframe.net/packages/logger/api-reference#loggerfactory Wiring, channels and the default channel
  */
 final class LoggerFactory
 {

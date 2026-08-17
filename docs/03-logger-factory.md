@@ -145,14 +145,22 @@ use Flytachi\Winter\Logger\Log;
 
 Log::debug('cache miss');
 Log::info('user created', ['id' => $id]);
+Log::notice('config reloaded');
 Log::warning('retrying', ['attempt' => 3]);
 Log::error('payment failed', ['order' => $orderId]);
 Log::critical('db down');
 Log::alert('disk full');
-Log::emergency('system crash');
 ```
 
-Equivalent to `LoggerFactory::logger()->{level}(...)`.
+Each call is `LoggerFactory::logger()->{level}(...)`.
+
+The facade carries **seven** of the eight PSR-3 levels — `emergency` is deliberately
+left off it, and its absence is a decision rather than a gap. Where that level is
+genuinely warranted, take the logger itself:
+
+```php
+LoggerFactory::logger()->emergency('system unusable');
+```
 
 ---
 

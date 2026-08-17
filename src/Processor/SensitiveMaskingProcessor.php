@@ -13,6 +13,8 @@ use Monolog\Processor\ProcessorInterface;
  *
  * Add extra keys via constructor:
  *   new SensitiveMaskingProcessor(['my_secret_field'])
+ *
+ * @link https://winterframe.net/packages/logger/mask-sensitive-data What is masked, and how to extend it
  */
 final class SensitiveMaskingProcessor implements ProcessorInterface
 {
