@@ -57,7 +57,10 @@ Produces a human-readable single-line format:
 
 - `-channel-` — always the registered channel name (`http`, `cli`, `sys`, …)
 - `[pid]` — OS process id of the emitting process (`getmypid()`), always present.
-  Lets you tell forked children apart from the parent in daemons/workers.
+  Lets you tell forked children apart from the parent in daemons/workers. A record with
+  `extra['program']` (`SpringLineFormatter::PROGRAM`) is an outside program's line —
+  winter-kernel's parsed program output: that PID is shown instead, `program` is left out
+  of the tail, and in colour the channel is blue rather than cyan.
 - `(ClassName)` — short class name, only present when logger was created via
   `LoggerFactory::getLogger(MyClass::class)`. Absent for raw `channel()` calls.
 - `{json}` — merged `context` + `extra` (request_id, class FQCN, etc.)

@@ -147,4 +147,34 @@ class SpringLineFormatterTest extends TestCase
         $this->assertStringContainsString('"order_id":7', $output);
         $this->assertStringContainsString('"request_id":"req-1"', $output);
     }
+
+    // ─── an outside program's line ───────────────────────────────────────────
+
+    public function testProgramLineShowsTheProgramsPidAndNoMarkInTheTail(): void
+    {
+        $output = $this->formatter->format($this->makeRecord(
+            channel: 'postgres',
+            message: 'ready',
+            context: ['statement' => 'SELECT 1'],
+            extra: [SpringLineFormatter::PROGRAM => 57],
+        ));
+        $this->assertSame("[2024-01-15 12:00:00] [INFO ] -postgres- [57]: ready {\"statement\":\"SELECT 1\"}\n", $output);
+    }
+
+    public function testProgramChannelIsBlueInColour(): void
+    {
+        $formatter = new SpringLineFormatter(color: true);
+        $program = $formatter->format($this->makeRecord(channel: 'postgres', extra: [SpringLineFormatter::PROGRAM => 57]));
+        $own = $formatter->format($this->makeRecord(channel: 'sys'));
+
+        $this->assertStringContainsString("\033[34m-postgres-", $program);
+        $this->assertStringContainsString("\033[36m-sys-", $own);
+    }
+
+    public function testAProgramMarkThatIsNotAPidIsLeftAsData(): void
+    {
+        $output = $this->formatter->format($this->makeRecord(extra: [SpringLineFormatter::PROGRAM => 'x']));
+        $this->assertStringContainsString('[' . getmypid() . ']', $output);
+        $this->assertStringContainsString('{"program":"x"}', $output);
+    }
 }

@@ -14,11 +14,20 @@ use Monolog\LogRecord;
  *   [2024-01-01 12:00:00] [INFO ] -http- [4821]: User logged in {"request_id":"abc"}
  *   [2024-01-01 12:00:00] [DEBUG] -http- [4821] (UserService): db query {"request_id":"abc","class":"App\\UserService"}
  *   [2024-01-01 12:00:00] [ERROR] -cli- [4821]: job failed
+ *   [2024-01-01 12:00:00] [INFO ] -postgres- [57]: database system is ready to accept connections
+ *
+ * A record whose `extra` has {@see PROGRAM} comes from an outside program the application
+ * runs — a database, a cache: its value is that program's PID, shown in place of this
+ * process's, and in colour its channel is blue rather than cyan, to tell it from the
+ * application's own.
  *
  * @link https://winterframe.net/packages/logger/log-format What each segment of the line means
  */
 final class SpringLineFormatter extends NormalizerFormatter
 {
+    /** The `extra` key that marks an outside program's line; its value is the program's PID. */
+    public const string PROGRAM = 'program';
+
     /**
      * @param bool $appendNewline Append a trailing newline. Keep true for file/stream
      *                            output; pass false for syslog (it frames messages itself,
@@ -43,7 +52,12 @@ final class SpringLineFormatter extends NormalizerFormatter
         $channel  = $record->channel;
 
         $data = array_merge($record->context, $record->extra);
-        $pid  = (string) getmypid();
+        $program = $record->extra[self::PROGRAM] ?? null;
+        $program = is_int($program) || (is_string($program) && ctype_digit($program)) ? (string) $program : null;
+        if ($program !== null) {
+            unset($data[self::PROGRAM]);
+        }
+        $pid  = $program ?? (string) getmypid();
         $name = isset($data['class']) ? $this->shortName((string) $data['class']) : null;
         $tail = empty($data) ? '' : json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $eol  = $this->appendNewline ? "\n" : '';
@@ -61,8 +75,9 @@ final class SpringLineFormatter extends NormalizerFormatter
         $lvl      = $this->levelColor($record->level);
         $namePart = $name !== null ? " \033[35m({$name}){$r}" : '';
         $tailPart = $tail === '' ? '' : " {$dim}{$tail}{$r}";
+        $chColor  = $program !== null ? "\033[34m" : "\033[36m";
 
-        return "{$dim}[{$datetime}]{$r} {$lvl}[{$level}]{$r} \033[36m-{$channel}-{$r}"
+        return "{$dim}[{$datetime}]{$r} {$lvl}[{$level}]{$r} {$chColor}-{$channel}-{$r}"
             . " {$dim}[{$pid}]{$r}{$namePart}: {$record->message}{$tailPart}{$eol}";
     }
 
